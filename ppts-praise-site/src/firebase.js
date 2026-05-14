@@ -7,12 +7,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAwFH0u1Ccs-QpFYFBx_rbNs5dHLQxMMXI",
-  authDomain: "chapelslides-4127f.firebaseapp.com",
-  projectId: "chapelslides-4127f",
-  storageBucket: "chapelslides-4127f.firebasestorage.app",
-  messagingSenderId: "715626404737",
-  appId: "1:715626404737:web:ce63459489760980f22680"
+  apiKey: "AIzaSyBFFReEIOjMG2NOH4QQZjjCCyVtx5MWUaE",
+  authDomain: "chapelslides-eb5c0.firebaseapp.com",
+  projectId: "chapelslides-eb5c0",
+  storageBucket: "chapelslides-eb5c0.firebasestorage.app",
+  messagingSenderId: "711394611559",
+  appId: "1:711394611559:web:176f07af395953ba2e1fc2"
 };
 
 // Initialize Firebase
