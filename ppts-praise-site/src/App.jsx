@@ -2,13 +2,41 @@ import React, { useState } from 'react';
 import pptxgen from "pptxgenjs";
 
 // ─────────────────────────────────────────────────────────────────
-// 1. 공통 스타일 (마스터와 본문이 '완벽히' 동일해야 함)
+// 1. 스타일 및 좌표 설정 (외곽선 및 투명도 100% 추가)
 // ─────────────────────────────────────────────────────────────────
-const STYLE_LYRIC_KOR = { x: 0, y: 0.18, w: 20, h: 2.2, fontFace: "페이퍼로지 5 Medium", fontSize: 72, color: "FFFFFF", align: "center", valign: "top", lineSpacingMultiple: 0.95 };
-const STYLE_LYRIC_ENG = { x: 0, y: 2.53, w: 20, h: 1.9, fontFace: "페이퍼로지 4 Regular", fontSize: 40, color: "FFFFFF", align: "center", valign: "top", lineSpacingMultiple: 0.90 };
-const STYLE_TITLE_KOR = { x: 2.23, y: 0.87, w: 17.7, h: 1.3, fontFace: "페이퍼로지 7 Bold", fontSize: 84, color: "FFFFFF", align: "right", valign: "bottom" };
-const STYLE_TITLE_ENG = { x: 2.22, y: 2.45, w: 17.7, h: 1.0, fontFace: "페이퍼로지 5 Medium", fontSize: 54, color: "FFFFFF", align: "right", valign: "top" };
+// 투명도 100% 외곽선 설정 (나중에 사용자가 PPT에서 색만 채우면 나타남)
+const GHOST_OUTLINE = { color: "000000", size: 0 };
 
+const STYLE_CONFIG = {
+  TITLE_KOR: { 
+    x: 2.2302, y: 0.875, w: 17.7143, h: 1.376, 
+    fontFace: "페이퍼로지 7 Bold", fontSize: 84, color: "FFFFFF", 
+    align: "right", valign: "bottom",
+    // outline: GHOST_OUTLINE 
+  },
+  TITLE_ENG: { 
+    x: 2.2292, y: 2.4574, w: 17.7708, h: 1.0962, 
+    fontFace: "페이퍼로지 5 Medium", fontSize: 54, color: "FFFFFF", 
+    align: "right", valign: "top",
+    // outline: GHOST_OUTLINE
+  },
+  LYRICS_KOR: { 
+    x: 0, y: 0.1816, w: 20, h: 2.235, 
+    fontFace: "페이퍼로지 5 Medium", fontSize: 72, color: "FFFFFF", 
+    align: "center", valign: "top", lineSpacingMultiple: 0.95,
+    // outline: GHOST_OUTLINE
+  },
+  LYRICS_ENG: { 
+    x: 0, y: 2.5322, w: 20, h: 1.9295, 
+    fontFace: "페이퍼로지 4 Regular", fontSize: 40, color: "FFFFFF", 
+    align: "center", valign: "top", lineSpacingMultiple: 0.90,
+    // outline: GHOST_OUTLINE
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// 2. 유틸리티 함수
+// ─────────────────────────────────────────────────────────────────
 function parseLyrics(raw) {
   const lines = raw.split('\n').map(l => l.trim());
   const sections = [];
@@ -27,37 +55,40 @@ function parseLyrics(raw) {
 const isKor = t => /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(t);
 
 // ─────────────────────────────────────────────────────────────────
-// 2. 마스터 정의 (핵심: name을 본문과 일치시킴)
+// 3. 슬라이드 마스터 정의
 // ─────────────────────────────────────────────────────────────────
 function defineMasters(pptx) {
+  const lyBg = "/template_bg.png"; 
+  const tiBg = "/template_title_bg.png";
+
   pptx.defineSlideMaster({
     title: "LYRICS_MASTER",
     objects: [
-      { image: { x: 0, y: 0, w: "100%", h: "100%", path: "/template_bg.png" } },
-      { placeholder: { options: { name: "korText", type: "body", ...STYLE_LYRIC_KOR }, text: "" } },
-      { placeholder: { options: { name: "engText", type: "body", ...STYLE_LYRIC_ENG }, text: "" } },
+      { image: { x: 0, y: 0, w: "100%", h: "100%", path: lyBg } },
+      { placeholder: { options: { name: "korText", type: "body", ...STYLE_CONFIG.LYRICS_KOR }, text: "" } },
+      { placeholder: { options: { name: "engText", type: "body", ...STYLE_CONFIG.LYRICS_ENG }, text: "" } },
     ],
   });
 
   pptx.defineSlideMaster({
     title: "TITLE_MASTER",
     objects: [
-      { image: { x: 0, y: 0, w: "100%", h: "100%", path: "/template_title_bg.png" } },
-      { placeholder: { options: { name: "songTitleKor", type: "title", ...STYLE_TITLE_KOR }, text: "" } },
-      { placeholder: { options: { name: "songTitleEng", type: "body", ...STYLE_TITLE_ENG }, text: "" } },
+      { image: { x: 0, y: 0, w: "100%", h: "100%", path: tiBg } },
+      { placeholder: { options: { name: "songTitleKor", type: "title", ...STYLE_CONFIG.TITLE_KOR }, text: "" } },
+      { placeholder: { options: { name: "songTitleEng", type: "body", ...STYLE_CONFIG.TITLE_ENG }, text: "" } },
     ],
   });
 }
 
 // ─────────────────────────────────────────────────────────────────
-// 3. PPT 생성 (핵심: 스타일 중복 선언 제거)
+// 4. PPT 생성 로직
 // ─────────────────────────────────────────────────────────────────
 function generatePPT(title, rawLyrics) {
   if (!rawLyrics.trim()) return alert("가사를 입력해주세요.");
 
   const pptx = new pptxgen();
-  pptx.defineLayout({ name: "CUSTOM", width: 20, height: 11.25 });
-  pptx.layout = "CUSTOM";
+  pptx.defineLayout({ name: "W20H11", width: 20, height: 11.25 });
+  pptx.layout = "W20H11";
   
   defineMasters(pptx);
   const sections = parseLyrics(rawLyrics);
@@ -66,25 +97,24 @@ function generatePPT(title, rawLyrics) {
     pptx.addSection({ title: sec.name });
 
     if (idx === 0) {
-      const slide = pptx.addSlide({ masterName: "TITLE_MASTER" });
+      const slide = pptx.addSlide({ masterName: "TITLE_MASTER", sectionTitle: sec.name });
       const kor = sec.lines.find(isKor) || title || sec.name;
       const eng = sec.lines.find(l => !isKor(l)) || "";
 
-      // 💡 포인트: 스타일을 다시 적지 않고 placeholder 매칭만 시도
-      slide.addText(kor, { placeholder: "songTitleKor" });
-      if (eng) slide.addText(eng, { placeholder: "songTitleEng" });
+      slide.addText(kor, { placeholder: "songTitleKor", ...STYLE_CONFIG.TITLE_KOR });
+      if (eng) slide.addText(eng, { placeholder: "songTitleEng", ...STYLE_CONFIG.TITLE_ENG });
     } else {
       const korLines = sec.lines.filter(isKor);
       const engLines = sec.lines.filter(l => !isKor(l));
       const maxLines = Math.max(korLines.length, engLines.length);
 
       for (let i = 0; i < maxLines; i += 2) {
-        const slide = pptx.addSlide({ masterName: "LYRICS_MASTER" });
+        const slide = pptx.addSlide({ masterName: "LYRICS_MASTER", sectionTitle: sec.name });
         const korPart = korLines.slice(i, i + 2).join('\n');
         const engPart = engLines.slice(i, i + 2).join('\n');
         
-        if (korPart) slide.addText(korPart, { placeholder: "korText" });
-        if (engPart) slide.addText(engPart, { placeholder: "engText" });
+        if (korPart) slide.addText(korPart, { placeholder: "korText", ...STYLE_CONFIG.LYRICS_KOR });
+        if (engPart) slide.addText(engPart, { placeholder: "engText", ...STYLE_CONFIG.LYRICS_ENG });
       }
     }
   });
@@ -116,7 +146,7 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "sans-serif", backgroundColor: "#fafafa" }}>
       <div style={{ width: "100%", maxWidth: "680px", padding: "40px", backgroundColor: "#fff", border: "1px solid #ddd", borderRadius: "20px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)" }}>
-        <h1 style={{ textAlign: "center", fontSize: "24px", color: "#333", marginBottom: "30px" }}>Worship PPT Generator v2</h1>
+        <h1 style={{ textAlign: "center", fontSize: "24px", color: "#333", marginBottom: "30px" }}>Worship PPT Generator</h1>
         
         <label style={{ display: "block", background: "#f8f9fa", padding: "20px", borderRadius: "10px", cursor: "pointer", marginBottom: "15px", border: "1px dashed #bbb", textAlign: "center" }}>
           <strong>📤 TXT 파일 업로드</strong>
