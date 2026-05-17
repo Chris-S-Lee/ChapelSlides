@@ -6,22 +6,22 @@ import pptxgen from "pptxgenjs";
 // ─────────────────────────────────────────────────────────────────
 const STYLE_CONFIG = {
   TITLE_KOR: {
-    x: 2.42, y: 0.73, w: 17, h: 1.38,
+    x: 2.83, y: 0.87, w: 17, h: 1.38,
     fontFace: "페이퍼로지 7 Bold", fontSize: 84, color: "FFFFFF",
     align: "right", valign: "bottom",
   },
   TITLE_ENG: {
-    x: 2.42, y: 1.96, w: 17, h: 1.1,
+    x: 2.83, y: 2.46, w: 17, h: 1.1,
     fontFace: "페이퍼로지 5 Medium", fontSize: 54, color: "FFFFFF",
     align: "right", valign: "top",
   },
   LYRICS_KOR: {
-    x: 0, y: 0.36, w: 20, h: 1.93,
+    x: 0, y: 0.38, w: 20, h: 2.2,
     fontFace: "페이퍼로지 5 Medium", fontSize: 72, color: "FFFFFF",
-    align: "center", valign: "top", lineSpacingMultiple: 0.7,
+    align: "center", valign: "top", lineSpacingMultiple: 0.75,
   },
   LYRICS_ENG: {
-    x: 0, y: 2.53, w: 20, h: 1.53,
+    x: 0, y: 2.7, w: 20, h: 1.5,
     fontFace: "페이퍼로지 4 Regular", fontSize: 40, color: "FFFFFF",
     align: "center", valign: "top", lineSpacingMultiple: 0.7,
   },
@@ -65,27 +65,28 @@ function mergeSections(sections) {
 }
 
 function defineMasters(pptx) {
-  const bg = "/template_bg.png";
-  pptx.defineSlideMaster({
-    title: "LYRICS_MASTER",
-    objects: [
-      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg } },
-      { placeholder: { options: { name: "korText", type: "body", ...STYLE_CONFIG.LYRICS_KOR }, text: "" } },
-      { placeholder: { options: { name: "engText", type: "body", ...STYLE_CONFIG.LYRICS_ENG }, text: "" } },
-    ],
-  });
+  const bg_title = "/template_bg_title.png";
+  const bg_content = "/template_bg_content.png";
   pptx.defineSlideMaster({
     title: "TITLE_MASTER",
     objects: [
-      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg } },
+      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg_title } },
       { placeholder: { options: { name: "songTitleKor", type: "title", ...STYLE_CONFIG.TITLE_KOR }, text: "" } },
       { placeholder: { options: { name: "songTitleEng", type: "body", ...STYLE_CONFIG.TITLE_ENG }, text: "" } },
     ],
   });
   pptx.defineSlideMaster({
+    title: "LYRICS_MASTER",
+    objects: [
+      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg_content } },
+      { placeholder: { options: { name: "korText", type: "body", ...STYLE_CONFIG.LYRICS_KOR }, text: "" } },
+      { placeholder: { options: { name: "engText", type: "body", ...STYLE_CONFIG.LYRICS_ENG }, text: "" } },
+    ],
+  });
+  pptx.defineSlideMaster({
     title: "BLANK_MASTER",
     objects: [
-      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg } },
+      { image: { x: 0, y: 0, w: "100%", h: "100%", path: bg_content } },
     ],
   });
 }
