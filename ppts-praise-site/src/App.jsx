@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import pptxgen from "pptxgenjs";
 
 // ─────────────────────────────────────────────────────────────────
-// 1. 스타일 설정
+// 1. 스타일 설정 (영문 폰트 크기를 줄여 '작은 대문자' 효과 적용)
 // ─────────────────────────────────────────────────────────────────
 const STYLE_CONFIG = {
   TITLE_KOR: {
@@ -12,7 +12,7 @@ const STYLE_CONFIG = {
   },
   TITLE_ENG: {
     x: 2.83, y: 2.46, w: 17, h: 1.1,
-    fontFace: "페이퍼로지 5 Medium", fontSize: 54, color: "FFFFFF",
+    fontFace: "페이퍼로지 5 Medium", fontSize: 40, color: "FFFFFF", // 54 -> 40으로 조정
     align: "right", valign: "top",
   },
   LYRICS_KOR: {
@@ -22,7 +22,7 @@ const STYLE_CONFIG = {
   },
   LYRICS_ENG: {
     x: 0, y: 2.7, w: 20, h: 1.5,
-    fontFace: "페이퍼로지 4 Regular", fontSize: 40, color: "FFFFFF",
+    fontFace: "페이퍼로지 4 Regular", fontSize: 28, color: "FFFFFF", // 40 -> 28로 조정
     align: "center", valign: "top", lineSpacingMultiple: 0.7,
   },
 };
@@ -91,6 +91,7 @@ function defineMasters(pptx) {
   });
 }
 
+// 영어를 대문자(Caps)로 변환하여 삽입
 function addSongToPPT(pptx, songTitle, sections, songIdx) {
   sections.forEach((sec, idx) => {
     const isLast = idx === sections.length - 1;
@@ -102,7 +103,8 @@ function addSongToPPT(pptx, songTitle, sections, songIdx) {
       const korLines = sec.lines.filter(isKor);
       const engLines = sec.lines.filter(l => !isKor(l));
       const kor = korLines[0] || songTitle || sec.name;
-      const eng = engLines[0] || "";
+      const eng = (engLines[0] || "").toUpperCase(); // 대문자 변환
+      
       slide.addText(kor, { placeholder: "songTitleKor", ...STYLE_CONFIG.TITLE_KOR });
       if (eng) slide.addText(eng, { placeholder: "songTitleEng", ...STYLE_CONFIG.TITLE_ENG });
 
@@ -117,7 +119,8 @@ function addSongToPPT(pptx, songTitle, sections, songIdx) {
       for (let i = 0; i < maxLines; i += 2) {
         const slide = pptx.addSlide({ masterName: "LYRICS_MASTER", sectionTitle: uniqueSecTitle });
         const korPart = korLines.slice(i, i + 2).join('\n');
-        const engPart = engLines.slice(i, i + 2).join('\n');
+        const engPart = engLines.slice(i, i + 2).join('\n').toUpperCase(); // 대문자 변환
+        
         if (korPart) slide.addText(korPart, { placeholder: "korText", ...STYLE_CONFIG.LYRICS_KOR });
         if (engPart) slide.addText(engPart, { placeholder: "engText", ...STYLE_CONFIG.LYRICS_ENG });
       }
@@ -175,13 +178,9 @@ export default function App() {
 
   const handleFiles = e => {
     const files = Array.from(e.target.files);
-    let firstNewId = null;
-
     files.forEach((f, index) => {
       const reader = new FileReader();
       const newId = uid();
-      if (index === 0) firstNewId = newId;
-
       reader.onload = ev => {
         setSongs(prev => {
           const updated = [...prev, { id: newId, title: f.name.replace(/\.[^/.]+$/, ""), content: ev.target.result }];
@@ -218,9 +217,10 @@ export default function App() {
     const a = [...prev]; [a[i+1], a[i]] = [a[i], a[i+1]]; return a;
   });
 
+  // 드래그 앤 드롭 핸들러 복구
   const onDragStart = (e, id) => { setDragging(id); e.dataTransfer.effectAllowed = "move"; };
   const onDragOver  = (e, id) => { e.preventDefault(); setDragOver(id); };
-  const onDragEnd   = ()       => { setDragging(null); setDragOver(null); };
+  const onDragEnd   = ()        => { setDragging(null); setDragOver(null); };
   const onDrop = (e, targetId) => {
     e.preventDefault();
     if (!dragging || dragging === targetId) { setDragging(null); setDragOver(null); return; }
@@ -243,7 +243,6 @@ export default function App() {
       fontFamily: "'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif",
       padding: "52px 24px 80px",
     }}>
-      {/* 항상 2단 그리드를 유지하도록 처리 */}
       <div style={{ 
         display: "grid", 
         gridTemplateColumns: "1fr 1fr", 
@@ -253,16 +252,14 @@ export default function App() {
         alignItems: "start"
       }}>
         
-        {/* ================= 좌측 컴포넌트 (목록 및 설정) ================= */}
+        {/* ================= 좌측 컴포넌트 ================= */}
         <div>
-          {/* 헤더 */}
           <div style={{ textAlign: "center", marginBottom: "36px" }}>
             <div style={{ fontSize: "26px", fontWeight: "800", color: C.text, letterSpacing: "-0.5px", marginBottom: "8px" }}>
               Worship PPT Generator
             </div>
           </div>
 
-          {/* 업로드 박스 */}
           <div
             onClick={() => fileInputRef.current.click()}
             style={{
@@ -280,7 +277,6 @@ export default function App() {
             <input ref={fileInputRef} type="file" accept=".txt" multiple onChange={handleFiles} style={{ display: "none" }} />
           </div>
 
-          {/* 곡 목록 */}
           {songs.length > 0 ? (
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", padding: "0 2px" }}>
@@ -290,6 +286,7 @@ export default function App() {
                 <span style={{ fontSize: "11px", color: C.muted }}>각 곡 끝에 빈 슬라이드 자동 삽입</span>
               </div>
 
+              {/* 정렬 가능한 목록 렌더링 */}
               <div style={{ marginBottom: "20px" }}>
                 {songs.map((song, i) => {
                   const isDragging = dragging === song.id;
@@ -371,7 +368,7 @@ export default function App() {
                 })}
               </div>
 
-              {/* 순서 미리보기 */}
+              {/* 순서 미리보기 복구 */}
               <div style={{
                 background: C.white, border: `1px solid ${C.border}`,
                 borderRadius: "14px", padding: "14px 18px", marginBottom: "20px",
@@ -401,7 +398,6 @@ export default function App() {
             </div>
           )}
 
-          {/* 생성 버튼 */}
           <button
             onClick={() => generatePPT(songs)}
             disabled={!songs.length}
@@ -412,16 +408,15 @@ export default function App() {
               border: "none", borderRadius: "14px",
               fontWeight: "800", fontSize: "16px",
               cursor: songs.length ? "pointer" : "not-allowed",
-              letterSpacing: "-0.2px",
               boxShadow: songs.length ? `0 4px 20px ${C.shadow}` : "none",
-              transition: "background 0.15s, transform 0.1s",
+              transition: "all 0.15s",
             }}
           >
             PPT 생성 및 다운로드
           </button>
         </div>
 
-        {/* ================= 우측 컴포넌트 (처음부터 항상 노출) ================= */}
+        {/* ================= 우측 컴포넌트 (가이드 및 텍스트 편집창) ================= */}
         <div style={{
           background: C.white, border: `1px solid ${C.border}`,
           borderRadius: "18px", padding: "24px", boxShadow: `0 4px 20px ${C.shadow}`,
@@ -446,32 +441,27 @@ export default function App() {
                   width: "100%", height: "32px", minHeight: "280px", padding: "16px",
                   border: `1.5px solid ${C.border}`, borderRadius: "12px",
                   fontSize: "13px", lineHeight: "1.6", color: C.text,
-                  fontFamily: "Pretendard, 'Menlo', 'Consolas', monospace", resize: "vertical",
-                  outline: "none", transition: "border-color 0.15s",
-                  boxSizing: "border-box"
+                  fontFamily: "Pretendard, monospace", resize: "vertical",
+                  outline: "none", boxSizing: "border-box"
                 }}
-                onFocus={e => e.target.style.borderColor = C.green}
-                onBlur={e => e.target.style.borderColor = C.border}
               />
             </>
           ) : (
-            <div style={{ 
-              color: C.text, fontSize: "15px", fontWeight: "700", marginBottom: "16px"
-            }}>
+            <div style={{ color: C.text, fontSize: "15px", fontWeight: "700", marginBottom: "16px" }}>
               ℹ️ PPT 생성 안내 가이드
             </div>
           )}
 
-          {/* 가이드 안내 영역 - 처음부터 항상 하단에 위치 */}
+          {/* 가이드 상시 노출 영역 복구 */}
           <div style={{ marginTop: activeSong ? "24px" : "0px" }}>
             <div style={{ fontSize: "12px", fontWeight: "700", color: C.sub, marginBottom: "8px" }}>
               텍스트 파일 작성 규칙 예시:
             </div>
             <pre style={{
               color: C.sub, fontSize: "11px", lineHeight: "1.8", margin: 0,
-              fontFamily: "Pretendard, 'Menlo', 'Consolas', monospace", whiteSpace: "pre-wrap",
+              fontFamily: "Pretendard, monospace", whiteSpace: "pre-wrap",
               background: C.greenLight, padding: "12px 14px", borderRadius: "10px",
-            }}>{`[Intro]\n찬양 제목 (한글)\nSong Title (English)\n\n[V]\n한글 가사 1행\n한글 가사 2행\n[C]\n한글 가사 3행\n한글 가사 4행`}</pre>
+            }}>{`[Intro]\n찬양 제목 (한글)\nSONG TITLE (ENGLISH)\n\n[V]\n한글 가사 1행\n한글 가사 2행\n[C]\n한글 가사 3행\n한글 가사 4행`}</pre>
             <div style={{
               marginTop: "12px", padding: "10px 14px",
               background: C.greenLight, borderRadius: "10px",
@@ -479,7 +469,7 @@ export default function App() {
               fontSize: "11px", color: C.sub, lineHeight: "1.7",
             }}>
               💡 같은 섹션명([V], [C] 등)의 한글/영어 블록은 자동 병합됩니다.<br />
-              💡 찬양 마지막에는 빈 슬라이드가 자동으로 포함됩니다.
+              💡 영문은 '작은 대문자(Small Caps)' 스타일로 변환되어 적용됩니다.
             </div>
           </div>
         </div>
